@@ -37,57 +37,54 @@ const initializeDatabase = async () => {
             await db.runAsync(`INSERT INTO Sections (section_name) VALUES (?)`, [section]);
         }
         const result = await db.execAsync('SELECT * FROM Sections');
-        if (result) {
-            const rows = await result.getAllAsync();
-            console.log(rows);
-        }
+        console.log(result);
 
         for (const subsection of foodBeverages) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (1, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (1, ?)`, [subsection]);
         }
 
         for (const subsection of selfCareHealth) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (2, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (2, ?)`, [subsection]);
         }
 
         for (const subsection of clothes) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (3, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (3, ?)`, [subsection]);
         }
 
         for (const subsection of fun) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (4, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (4, ?)`, [subsection]);
         }
 
         for (const subsection of gifts) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (5, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (5, ?)`, [subsection]);
         }
 
         for (const subsection of technology) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (6, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (6, ?)`, [subsection]);
         }
 
         for (const subsection of housing) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (7, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (7, ?)`, [subsection]);
         }
 
         for (const subsection of transportation) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (8, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (8, ?)`, [subsection]);
         }
 
         for (const subsection of utilities) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (9, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (9, ?)`, [subsection]);
         }
 
         for (const subsection of insurance) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (10, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (10, ?)`, [subsection]);
         }
 
         for (const subsection of debt) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (11, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (11, ?)`, [subsection]);
         }
 
         for (const subsection of miscellaneous) {
-            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (12, ?);`, [subsection]);
+            await db.runAsync(`INSERT INTO Subsections (section_id, subsection_name) VALUES (12, ?)`, [subsection]);
         }
 
         console.log('Database initialized successfully');
