@@ -5,23 +5,8 @@ import { measurements, measurementsForDays, measurementsForWeeks, measurementsFo
     days, weeks, months, years, sections, foodBeverages, 
     selfCareHealth, clothes, fun, gifts, technology, housing, 
     transportation, utilities, insurance, debt, miscellaneous } from '../components/lists';
-
-type LimitInfo = {
-    limitAmount: string;
-    limitSection: string;
-    limitSubsection: string;
-    limitTimePeriod: string;
-};
-
-type CutDownInfo = {
-    cutDownAmount: string;
-    cutDownSection: string;
-    cutDownSubsection: string;
-    cutDownTimePeriod: string;
-    cutDownTimeAmount: number;
-    cutDownTimePeriodPlural: string;
-    cutDownBaseAmount: string;
-};
+import { addLimitPlan, addCutDownPlan } from '../components/db';
+import { LimitInfo, CutDownInfo } from '../models/DatabaseEntryInfo';
 
 const GoalsScreen: React.FC = () => {
     const [modalOneVisible, setModalOneVisible] = useState<boolean>(false);
@@ -216,6 +201,8 @@ const GoalsScreen: React.FC = () => {
         const newEntry: LimitInfo = { limitAmount: amountOne, limitSection: section, limitSubsection: subsection, 
             limitTimePeriod: timePeriod };
         setLimitList([...limitList, newEntry]);
+
+        addLimitPlan(newEntry);
     };
 
     const handleCutDownEntry = () => {
@@ -229,6 +216,8 @@ const GoalsScreen: React.FC = () => {
             cutDownTimePeriod: timePeriod, cutDownTimeAmount: timeAmount, cutDownTimePeriodPlural: timePeriodPlural,
             cutDownBaseAmount: amountTwo };
         setCutDownList([...cutDownList, newEntry]);
+
+        addCutDownPlan(newEntry);
     };
 
     const toggleLimitPlan = () => {

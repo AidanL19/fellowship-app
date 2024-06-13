@@ -5,7 +5,7 @@ import { sections, foodBeverages, selfCareHealth, clothes, fun, gifts,
     technology, housing, transportation, utilities, insurance, debt, 
     miscellaneous } from '../components/lists'
 import { addTransaction } from '../components/db';
-import type { TransactionInfo } from '../models/TransactionInfo';
+import type { TransactionInfo } from '../models/DatabaseEntryInfo';
 
 const TransactionsScreen: React.FC = () => {
     const [modalOneVisible, setModalOneVisible] = useState<boolean>(false);
