@@ -40,10 +40,13 @@ const initializeDatabase = async () => {
             amount DECIMAL NOT NULL,
             section_id INTEGER NOT NULL,
             subsection_id INTEGER NOT NULL,
-            time_period TEXT NOT NULL,
-            limit_plan_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            time_amount INTEGER NOT NULL,
+            time_period_plural TEXT NOT NULL,
+            start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            end_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            counter DECIMAL NOT NULL,
             FOREIGN KEY (section_id) REFERENCES Sections(section_id),
-            FOREIGN KEY (subsection_id) REFERENCES Subsections(subsection_id)
+            FOREIGN KEY (subsection_id) REFERENCES Subsections(subsection_id) 
         )`);
 
         await db.execAsync(`CREATE TABLE IF NOT EXISTS CutDownPlan (
@@ -55,7 +58,9 @@ const initializeDatabase = async () => {
             time_amount INTEGER NOT NULL,
             time_period_plural TEXT NOT NULL,
             base_amount DECIMAL NOT NULL,
-            cut_down_plan_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            end_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            counter DECIMAL NOT NULL,
             FOREIGN KEY (section_id) REFERENCES Sections(section_id),
             FOREIGN KEY (subsection_id) REFERENCES Subsections(subsection_id)
         )`);
@@ -131,11 +136,22 @@ const initializeDatabase = async () => {
     }
 };
 
+const databaseReady = async () => {
+    if (db !== undefined) {
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+
 const clearDatabase = async () => {
     try {
         await db.execAsync('DROP TABLE IF EXISTS Transactions');
         await db.execAsync('DROP TABLE IF EXISTS Subsections');
         await db.execAsync('DROP TABLE IF EXISTS Sections');
+        await db.execAsync('DROP TABLE IF EXISTS LimitPlan');
+        await db.execAsync('DROP TABLE IF EXISTS CutDownPlan');
 
         console.log('Database cleared successfully');
     }
@@ -145,7 +161,17 @@ const clearDatabase = async () => {
 }
 
 const getLocalTime = () => {
-    return moment().format('YYYY-MM-DD HH:mm:ss'); 
+    return moment().format('YYYY-MM-DD'); 
+};
+
+const getEndTime = (timeAmount: any, timePeriod: string) => {
+    return moment().add(timeAmount, timePeriod).format('YYYY-MM-DD');
+};
+
+const getDaysUntilEnd = (startDate: string, endDate: string) => {
+    const start = moment(startDate, 'YYYY-MM-DD HH:mm:ss');
+    const end = moment(endDate, 'YYYY-MM-DD HH:mm:ss');
+    return end.diff(start, 'days');
 };
 
 const addTransaction = async (newEntry: TransactionInfo) => {
@@ -164,7 +190,7 @@ const addTransaction = async (newEntry: TransactionInfo) => {
 
         const transactionDate = getLocalTime();
 
-        await db.runAsync('INSERT INTO Transactions (section_id, subsection_id, amount) VALUES (?, ?, ?, ?)', 
+        await db.runAsync('INSERT INTO Transactions (section_id, subsection_id, amount, transaction_date) VALUES (?, ?, ?, ?)', 
             [transactionSection[0].section_id, transactionSubsection[0].subsection_id, transactionAmount, transactionDate]
         );
 
@@ -189,12 +215,19 @@ const addLimitPlan = async (newEntry: LimitInfo) => {
             'SELECT subsection_id FROM Subsections WHERE subsection_name = ?', [newEntry.limitSubsection]
         );
 
-        const limitPlanTimePeriod = newEntry.limitTimePeriod;
+        const limitPlanTimeAmount = newEntry.limitTimeAmount;
 
-        const limitPlanDate = getLocalTime();
+        const limitPlanTimePeriodPlural = newEntry.limitTimePeriodPlural;
 
-        await db.runAsync('INSERT INTO LimitPlan (amount, section_id, subsection_id, time_period) VALUES (?, ?, ?, ?, ?)', 
-            [limitPlanAmount, limitPlanSection[0].section_id, limitPlanSubsection[0].subsection_id, limitPlanTimePeriod, limitPlanDate]
+        const limitPlanStartDate = getLocalTime();
+
+        const limitPlanEndDate = getEndTime(limitPlanTimeAmount, limitPlanTimePeriodPlural.toLowerCase());
+
+        const limitPlanCounter = 0.00;
+
+        return await db.runAsync('INSERT INTO LimitPlan (amount, section_id, subsection_id, time_amount, time_period_plural, start_date, end_date, counter) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+            [limitPlanAmount, limitPlanSection[0].section_id, limitPlanSubsection[0].subsection_id, limitPlanTimeAmount, 
+            limitPlanTimePeriodPlural, limitPlanStartDate, limitPlanEndDate, limitPlanCounter]
         );
 
         console.log('Limit plan added successfully');
@@ -226,11 +259,15 @@ const addCutDownPlan = async (newEntry: CutDownInfo) => {
 
         const cutDownPlanBaseAmount = newEntry.cutDownBaseAmount;
 
-        const cutDownPlanDate = getLocalTime();
+        const cutDownPlanStartDate = getLocalTime();
 
-        await db.runAsync('INSERT INTO CutDownPlan (amount, section_id, subsection_id, time_period, time_amount, time_period_plural, base_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+        const cutDownPlanEndDate = getEndTime(cutDownPlanTimeAmount, cutDownPlanTimePeriodPlural.toLowerCase());
+
+        const cutDownPlanCounter = 0.00;
+
+        return await db.runAsync('INSERT INTO CutDownPlan (amount, section_id, subsection_id, time_period, time_amount, time_period_plural, base_amount, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
             [cutDownPlanAmount, cutDownPlanSection[0].section_id, cutDownPlanSubsection[0].subsection_id, cutDownPlanTimePeriod, 
-            cutDownPlanTimeAmount, cutDownPlanTimePeriodPlural, cutDownPlanBaseAmount, cutDownPlanDate]
+            cutDownPlanTimeAmount, cutDownPlanTimePeriodPlural, cutDownPlanBaseAmount, cutDownPlanStartDate, cutDownPlanEndDate, cutDownPlanCounter]
         );
 
         console.log('Cut down plan added successfully');
@@ -240,4 +277,164 @@ const addCutDownPlan = async (newEntry: CutDownInfo) => {
     }
 };
 
-export { initializeDatabase, clearDatabase, addTransaction, addLimitPlan, addCutDownPlan };
+const checkTransaction = async (newEntry: TransactionInfo) => {
+    console.log("Checking transaction...");
+
+    try {
+        const transactionSection = [newEntry.listSection]
+
+        const transactionSubsection = [newEntry.listSubsection]
+
+        const transactionAmount = [newEntry.listAmount];
+
+        return { transactionSection, transactionSubsection, transactionAmount };
+
+        console.log('Transaction checked successfully');
+    }
+    catch (error) {
+        console.error('Failed to check transaction:', error);
+    }
+};
+
+const checkGoals = async (transactionSection: string, transactionSubsection: string, currentGoal: string) => {
+    console.log("Checking goals...");
+
+    try {
+        if (currentGoal.includes(transactionSection) && currentGoal.includes(transactionSubsection)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+
+        console.log('Goals checked successfully');
+    }
+    catch (error) {
+        console.error('Failed to check goals:', error);
+    }
+};
+
+const changeCounter = async (transactionSection: string, transactionSubsection: string, transactionAmount: string) => {
+    console.log("Changing counter...");
+
+    try {
+        const goalSection = await db.getAllAsync(
+            'SELECT section_id FROM Sections WHERE section_name = ?', [transactionSection[0]]
+        );
+
+        const goalSubsection = await db.getAllAsync(
+            'SELECT subsection_id FROM Subsections WHERE subsection_name = ?', [transactionSubsection[0]]
+        );
+
+        await db.runAsync('UPDATE LimitPlan SET counter = counter + ? WHERE section_id = ? AND subsection_id = ?', [transactionAmount[0], goalSection[0].section_id, goalSubsection[0].subsection_id]);
+        await db.runAsync('UPDATE CutDownPlan SET counter = counter + ? WHERE section_id = ? AND subsection_id = ?', [transactionAmount[0], goalSection[0], goalSubsection[0]]);
+
+        const newLimitCounters = await db.getAllAsync(
+            'SELECT counter FROM LimitPlan WHERE section_id = ? AND subsection_id = ?', [goalSection[0].section_id, goalSubsection[0].subsection_id]
+        ); 
+
+        const newCutDownCounters = await db.getAllAsync(
+            'SELECT counter FROM CutDownPlan WHERE section_id = ? AND subsection_id = ?', [goalSection[0].section_id, goalSubsection[0].subsection_id]
+        );
+
+        console.log(newLimitCounters[0].counter);
+
+        console.log('Counter changed successfully');
+    }
+    catch (error) {
+        console.error('Failed to change counter:', error);
+    }
+};
+
+const getTimePeriodSpending = async (timePeriod: string) => {
+    console.log("Getting time period for spending...");
+
+    try {
+        switch (timePeriod) {
+            case 'Day':
+                return "strftime('%Y-%m-%d', t.transaction_date) = strftime('%Y-%m-%d', date('now'))";
+            case 'Week':
+                return "strftime('%Y-%W', t.transaction_date) = strftime('%Y-%W', date('now'))";
+            case 'Month':
+                return "strftime('%Y-%m', t.transaction_date) = strftime('%Y-%m', date('now'))";
+            case 'Year':
+                return "strftime('%Y', t.transaction_date) = strftime('%Y', date('now'))";
+        }
+    }
+    catch (error) {
+        console.error('Failed to get time period for spending:', error);
+    }
+};
+
+const displaySpending = async (timePeriod: string) => {
+    console.log("Displaying spending...");
+
+    const timeFilter = await getTimePeriodSpending(timePeriod);
+
+    try {
+        return await db.getAllAsync(`
+            SELECT s.section_name, ss.subsection_name, SUM(t.amount) as total, 
+                concat(s.section_name, ' - ', ss.subsection_name, ': $', SUM(t.amount)) as spending_list 
+            FROM Transactions t 
+                INNER JOIN main.Sections S on S.section_id = t.section_id 
+                INNER JOIN main.Subsections SS on SS.subsection_id = t.subsection_id 
+            WHERE 
+                ${timeFilter}
+            GROUP BY 
+                s.section_id, ss.subsection_id 
+            ORDER BY 
+                SUM(t.amount) DESC
+        `);
+    }
+    catch (error) {
+        console.error('Failed to display spending:', error);
+
+        return [];
+    }
+};
+
+const displayLimitGoals = async () => {
+    console.log("Displaying limit goals...");
+
+    try {
+        return await db.getAllAsync(`
+            SELECT lp.amount, s.section_name, ss.subsection_name, lp.time_amount, lp.time_period_plural, lp.end_date,
+                concat('Spend less than $', lp.amount, ' on ', s.section_name, ' - ', ss.subsection_name, ' for ', 
+                lp.time_amount, ' ', lp.time_period_plural, '. Ends on ', lp.end_date) as limit_goals_list
+            FROM LimitPlan lp
+                INNER JOIN main.Sections S on S.section_id = lp.section_id 
+                INNER JOIN main.Subsections SS on SS.subsection_id = lp.subsection_id
+        `);
+    }
+    catch (error) {
+        console.error('Failed to display limit goals:', error);
+
+        return [];
+    }
+};
+
+const displayCutDownGoals = async () => {
+    console.log("Displaying cut down goals...");
+
+    try {
+        return await db.getAllAsync(`
+            SELECT cdp.amount, s.section_name, ss.subsection_name, cdp.time_period, cdp.time_amount, cdp.time_period_plural,
+            cdp.base_amount, cdp.end_date,
+                concat('Spend $', cdp.amount, ' less on ', s.section_name, ' - ', ss.subsection_name, ' each ',
+                cdp.time_period, ' for ', cdp.time_amount, ' ', cdp.time_period_plural, ' with base $',
+                cdp.base_amount, '. Ends on ', cdp.end_date) as cut_down_goals_list
+            FROM CutDownPlan cdp
+                INNER JOIN main.Sections S on S.section_id = cdp.section_id 
+                INNER JOIN main.Subsections SS on SS.subsection_id = cdp.subsection_id
+        `);
+    }
+    catch (error) {
+        console.error('Failed to display cut down goals:', error);
+
+        return [];
+    }
+};
+
+export { initializeDatabase, clearDatabase, addTransaction, addLimitPlan, addCutDownPlan, displaySpending, 
+    getTimePeriodSpending, databaseReady, displayLimitGoals, displayCutDownGoals, checkTransaction, checkGoals,
+    changeCounter };

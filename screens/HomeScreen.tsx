@@ -1,10 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { measurements, test } from '../components/lists';
+import { displaySpending, databaseReady } from '../components/db';
+import { useSpendingGoals } from '../Context';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen: React.FC = () => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [timePeriod, setTimePeriod] = useState<string>("Day");
+    const { spendingList, totalAmount, updateSpending } = useSpendingGoals();
+
+    const fetchSpending = async () => {
+        try {    
+            const dbReady = await databaseReady();
+            if (dbReady) {
+                const results = await displaySpending(timePeriod);
+                updateSpending(results);
+            } 
+        } 
+        catch (error) {
+            console.error('Failed to fetch spending data:', error);
+        }
+    };
+    
+    useEffect(() => {
+        console.log('Fetching spending...');
+
+        fetchSpending();
+      }, [timePeriod]);
+
+    useFocusEffect(
+        useCallback(() => {
+            console.log('Refreshing spending...');
+
+            fetchSpending();
+        }, [timePeriod])
+    );
 
     return (
         <SafeAreaView style = {styles.overallContainer}>
@@ -56,16 +87,16 @@ const HomeScreen: React.FC = () => {
                             </View>
                         </Modal>
                     </View>
-                    <Text style = {styles.amountText}>$123.45</Text>
+                    <Text style = {styles.amountText}>${totalAmount}</Text>
                     <Text style = {styles.h2Text}>Top Contributors For This {timePeriod}:</Text>
                     <View style = {styles.contributorsContainer}>
                         <ScrollView style = {styles.scrollViewStyle}>
-                            {test.map((num, index) => (
+                            {spendingList.map((spending: string, index: number) => (
                                 <View key = {index} style = {[
                                     styles.optionsButton,
-                                    index < test.length && styles.optionBorder
+                                    index < spendingList.length && styles.optionBorder
                                 ]}>
-                                    <Text style = {styles.optionsButton}>{num}</Text>
+                                    <Text style = {styles.optionsButton}>{spending}</Text>
                                 </View>
                             ))}
                         </ScrollView>

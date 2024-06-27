@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Modal, Pressable, 
     ScrollView, TextInput, Keyboard, Alert } from 'react-native';
 import { measurements, measurementsForDays, measurementsForWeeks, measurementsForMonths, measurementsPlural, test, 
     days, weeks, months, years, sections, foodBeverages, 
     selfCareHealth, clothes, fun, gifts, technology, housing, 
     transportation, utilities, insurance, debt, miscellaneous } from '../components/lists';
-import { addLimitPlan, addCutDownPlan } from '../components/db';
+import { displayLimitGoals, displayCutDownGoals, databaseReady } from '../components/db';
+import { useSpendingGoals } from '../Context';
+import { useFocusEffect } from '@react-navigation/native';
+import { addLimitPlan, addCutDownPlan, checkGoals, changeCounter } from '../components/db';
 import { LimitInfo, CutDownInfo } from '../models/DatabaseEntryInfo';
 
 const GoalsScreen: React.FC = () => {
@@ -32,7 +35,8 @@ const GoalsScreen: React.FC = () => {
     const [isFocused, setIsFocused] = useState(false);
     const [limitList, setLimitList] = useState<LimitInfo[]>([]);
     const [cutDownList, setCutDownList] = useState<CutDownInfo[]>([]);
-
+    const { limitGoalsList, updateLimitGoals, cutDownGoalsList, updateCutDownGoals, setGoalsList, goalsList } = useSpendingGoals();
+    
     useEffect(() => {
         let initialSubsection: string = "Groceries";
         let newSubsections: string[] = foodBeverages;
@@ -125,10 +129,28 @@ const GoalsScreen: React.FC = () => {
         setTimePeriod(initialTimePeriod);
         setTimePeriods(newTimePeriods);
 
+        setGoalsList(limitGoalsList.concat(cutDownGoalsList));
+
         console.log(limitList);
         console.log(cutDownList);
 
-    }, [section, timePeriodPlural, limitList, cutDownList]); 
+    }, [section, timePeriodPlural, limitList, cutDownList, limitGoalsList, cutDownGoalsList]); 
+
+    const fetchGoals = async () => {
+        try {
+            const dbReady = await databaseReady();
+            if (dbReady) {
+                const results1 = await displayLimitGoals();
+                updateLimitGoals(results1);
+
+                const results2 = await displayCutDownGoals();
+                updateCutDownGoals(results2);
+            }
+        } 
+        catch (error) {
+            console.error('Failed to fetch spending data:', error);
+        }
+    };
 
     let valid: boolean = true;
 
@@ -192,20 +214,20 @@ const GoalsScreen: React.FC = () => {
         }
     };
 
-    const handleLimitEntry = () => {
+    const handleLimitEntry = async () => {
         handleSubmissionOne();  
         if (!valid) {
             return;  
         }
 
         const newEntry: LimitInfo = { limitAmount: amountOne, limitSection: section, limitSubsection: subsection, 
-            limitTimePeriod: timePeriod };
-        setLimitList([...limitList, newEntry]);
+            limitTimeAmount: timeAmount, limitTimePeriodPlural: timePeriodPlural };
+        setLimitList([...limitList, newEntry]); 
 
-        addLimitPlan(newEntry);
+        return await addLimitPlan(newEntry);
     };
 
-    const handleCutDownEntry = () => {
+    const handleCutDownEntry = async () => {
         handleSubmissionOne();  
         handleSubmissionTwo();
         if (!valid) {
@@ -217,7 +239,7 @@ const GoalsScreen: React.FC = () => {
             cutDownBaseAmount: amountTwo };
         setCutDownList([...cutDownList, newEntry]);
 
-        addCutDownPlan(newEntry);
+        return await addCutDownPlan(newEntry);
     };
 
     const toggleLimitPlan = () => {
@@ -239,7 +261,7 @@ const GoalsScreen: React.FC = () => {
                         { opacity: pressed ? 0.5 : 1 } 
                     ]}
                     onPress = {toggleLimitPlan}>
-                    <Text style = {styles.planText}>Limit Plan:</Text>
+                    <Text style = {styles.planText}>Limit Plan</Text>
                 </Pressable>
                 {displayLimitPlan && (
                     <View style = {styles.limitCutDownDisplay}>
@@ -346,35 +368,35 @@ const GoalsScreen: React.FC = () => {
                                 </Modal>
                             </View>
                             <View style = {styles.rowContainer}>
-                                <Text style = {styles.h2Text}>this</Text>
+                                <Text style = {styles.h2Text}>for</Text>
                                 <Pressable 
                                     style = {({ pressed }) => [
                                         { opacity: pressed ? 0.5 : 1 } 
                                     ]}
-                                    onPress = {() => setModalThreeVisible(true)}>  
-                                    <Text style = {styles.dropdown}>{timePeriod}</Text>
+                                    onPress = {() => setModalFiveVisible(true)}>  
+                                    <Text style = {styles.dropdown}>{timeAmount}</Text>
                                 </Pressable>
                                 <Modal
                                     animationType = "slide"
                                     transparent = {true}
-                                    visible = {modalThreeVisible}
-                                    onRequestClose = {() => setModalThreeVisible(false)}>
+                                    visible = {modalFiveVisible}
+                                    onRequestClose = {() => setModalFiveVisible(false)}>
                                     <View style = {styles.outerModalView}>
                                         <View style = {styles.modalView}>
                                             <ScrollView style = {styles.scrollViewStyle}>
-                                                {measurements.map((measure, index) => (
+                                                {timeAmounts.map((timeAmount, index) => (
                                                     <Pressable
                                                         key = {index}
                                                         style = {({ pressed }) => [
                                                             styles.optionsButton,
-                                                            index < measurements.length && styles.optionBorder,
+                                                            index < timeAmounts.length && styles.optionBorder,
                                                             { opacity: pressed ? 0.5 : 1 }  
                                                         ]}
                                                         onPress = {() => {
-                                                            setTimePeriod(measure);
-                                                            setModalThreeVisible(false); 
+                                                            setTimeAmount(timeAmount);
+                                                            setModalFiveVisible(false); 
                                                         }}>
-                                                        <Text style = {styles.optionsButton}>{measure}</Text>
+                                                        <Text style = {styles.optionsButton}>{timeAmount}</Text>
                                                     </Pressable>
                                                 ))}
                                             </ScrollView>
@@ -383,7 +405,49 @@ const GoalsScreen: React.FC = () => {
                                                     styles.cancelButton,
                                                     { opacity: pressed ? 0.5 : 1 } 
                                                 ]}
-                                                onPress = {() => setModalThreeVisible(false)}>
+                                                onPress = {() => setModalFiveVisible(false)}>
+                                                <Text style = {styles.cancelText}>Cancel</Text>
+                                            </Pressable>
+                                        </View>
+                                    </View>
+                                </Modal>
+                                <Pressable 
+                                    style = {({ pressed }) => [
+                                        { opacity: pressed ? 0.5 : 1 } 
+                                    ]}
+                                    onPress = {() => setModalSixVisible(true)}>  
+                                    <Text style = {styles.dropdown}>{timePeriodPlural}</Text>
+                                </Pressable>
+                                <Modal
+                                    animationType = "slide"
+                                    transparent = {true}
+                                    visible = {modalSixVisible}
+                                    onRequestClose = {() => setModalSixVisible(false)}>
+                                    <View style = {styles.outerModalView}>
+                                        <View style = {styles.modalView}>
+                                            <ScrollView style = {styles.scrollViewStyle}>
+                                                {measurementsPlural.map((timePlural, index) => (
+                                                    <Pressable
+                                                        key = {index}
+                                                        style = {({ pressed }) => [
+                                                            styles.optionsButton,
+                                                            index < timePeriodPlural.length && styles.optionBorder,
+                                                            { opacity: pressed ? 0.5 : 1 }  
+                                                        ]}
+                                                        onPress = {() => {
+                                                            setTimePeriodPlural(timePlural);
+                                                            setModalSixVisible(false); 
+                                                        }}>
+                                                        <Text style = {styles.optionsButton}>{timePlural}</Text>
+                                                    </Pressable>
+                                                ))}
+                                            </ScrollView>
+                                            <Pressable
+                                                style = {({ pressed }) => [
+                                                    styles.cancelButton,
+                                                    { opacity: pressed ? 0.5 : 1 } 
+                                                ]}
+                                                onPress = {() => setModalSixVisible(false)}>
                                                 <Text style = {styles.cancelText}>Cancel</Text>
                                             </Pressable>
                                         </View>
@@ -397,11 +461,12 @@ const GoalsScreen: React.FC = () => {
                                             style = {({ pressed }) => [
                                                 { opacity: pressed ? 0.5 : 1 } 
                                             ]}
-                                            onPress={() => {
+                                            onPress = { async () => {
                                                 handleSubmissionOne();
                                                 if (valid) {
                                                     setModalFourVisible(true)
-                                                    handleLimitEntry();
+                                                    await handleLimitEntry();
+                                                    fetchGoals();
                                                 }
                                             }}>
                                             <Text style = {styles.h2Text}>Finish Goal</Text>
@@ -440,7 +505,7 @@ const GoalsScreen: React.FC = () => {
                         { opacity: pressed ? 0.5 : 1 } 
                     ]}
                     onPress = {toggleCutDownPlan}>
-                    <Text style = {styles.planText}>Cut Down Plan:</Text>
+                    <Text style = {styles.planText}>Cut Down Plan</Text> 
                 </Pressable>
                 {displayCutDownPlan && (
                     <View style = {styles.limitCutDownDisplay}>
@@ -695,11 +760,12 @@ const GoalsScreen: React.FC = () => {
                                             style = {({ pressed }) => [
                                                 { opacity: pressed ? 0.5 : 1 } 
                                             ]}
-                                            onPress={() => {
+                                            onPress = {async () => {
                                                 handleSubmissionTwo();
                                                 if (valid) {
                                                     setModalFourVisible(true)
-                                                    handleCutDownEntry();
+                                                    await handleCutDownEntry();
+                                                    fetchGoals();
                                                 }
                                             }}>
                                             <Text style = {styles.h2Text}>Finish Goal</Text>
@@ -736,43 +802,15 @@ const GoalsScreen: React.FC = () => {
                 <Text style = {styles.goalsText}>Current Goals:</Text>
                 <View style = {styles.goalsContainer}>
                     <ScrollView style = {styles.scrollViewStyle}>
-                        {test.map((num, index) => (
-                            <Pressable
-                                key = {index}
-                                style = {({ pressed }) => [
-                                    styles.optionsButton,
-                                    index < test.length && styles.optionBorder,
-                                    { opacity: pressed ? 0.5 : 1 }  
-                                ]}
-                                onPress = {() => {
-                                    setGoal(num);
-                                    setModalSevenVisible(true); 
-                                }}>
-                                <Text style = {styles.optionsButton}>{num}</Text>
-                            </Pressable>
+                        {goalsList.map((goal: string, index: number) => (
+                            <View key = {index} style = {[
+                                styles.optionsButton,
+                                index < goalsList.length && styles.optionBorder
+                            ]}>
+                                <Text style = {styles.optionsButton}>{goal}</Text>
+                            </View>
                         ))}
                     </ScrollView>
-                    <Modal
-                        animationType = "slide"
-                        transparent = {true}
-                        visible = {modalSevenVisible}
-                        onRequestClose = {() => setModalSevenVisible(false)}>
-                        <View style = {styles.outerModalView}>
-                            <View style = {styles.modalView}>
-                                <View style = {styles.submittedViewStyle}>
-                                    <Text style = {styles.h3Text}>{goal}</Text>
-                                </View>
-                                <Pressable
-                                    style = {({ pressed }) => [
-                                        styles.cancelButton,
-                                        { opacity: pressed ? 0.5 : 1 } 
-                                    ]}
-                                    onPress = {() => setModalSevenVisible(false)}>
-                                    <Text style = {styles.cancelText}>Cancel</Text>
-                                </Pressable>
-                            </View>
-                        </View>
-                    </Modal>
                 </View>
             </View>
         </SafeAreaView>

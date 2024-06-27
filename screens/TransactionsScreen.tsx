@@ -4,7 +4,8 @@ import { SafeAreaView, View, Text, StyleSheet, Modal, Pressable,
 import { sections, foodBeverages, selfCareHealth, clothes, fun, gifts, 
     technology, housing, transportation, utilities, insurance, debt, 
     miscellaneous } from '../components/lists'
-import { addTransaction } from '../components/db';
+import { useSpendingGoals } from '../Context';
+import { addTransaction, checkTransaction, checkGoals, changeCounter } from '../components/db';
 import type { TransactionInfo } from '../models/DatabaseEntryInfo';
 
 const TransactionsScreen: React.FC = () => {
@@ -17,6 +18,7 @@ const TransactionsScreen: React.FC = () => {
     const [amount, setAmount] = useState<string>('');
     const [isFocused, setIsFocused] = useState(false);
     const [transactionList, setTransactionList] = useState<TransactionInfo[]>([]);
+    const { setTransactionSubmission, goalsList, transactionSubmission } = useSpendingGoals();
 
     useEffect(() => {
         let initialSubsection: string = "Groceries";
@@ -112,7 +114,7 @@ const TransactionsScreen: React.FC = () => {
         }
     };
 
-    const handleAddEntry = () => {
+    const handleAddEntry = async () => {
         handleSubmission();  
         if (!valid) {
             return;  
@@ -120,7 +122,25 @@ const TransactionsScreen: React.FC = () => {
         const newEntry: TransactionInfo = { listSection: section, listSubsection: subsection, listAmount: amount };
         setTransactionList([...transactionList, newEntry]);
 
-        addTransaction(newEntry);
+        const transactionSubmission = await checkTransaction(newEntry);
+        setTransactionSubmission(transactionSubmission);
+
+        return await addTransaction(newEntry);
+    };
+
+    let found: boolean = false;
+
+    const checkGoalsList = async () => {
+        for (let i: number = 0; i < goalsList.length; i++) {
+            const result = await checkGoals(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, goalsList[i]);
+            if (result) {
+                changeCounter(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, transactionSubmission.transactionAmount);
+                found = true;
+            }
+            if (found) {
+                break;
+            }
+        }
     };
 
     return (
@@ -237,11 +257,12 @@ const TransactionsScreen: React.FC = () => {
                             style = {({ pressed }) => [
                                 { opacity: pressed ? 0.5 : 1 } 
                             ]}
-                            onPress={() => {
+                            onPress = {async () => {
                                 handleSubmission();
                                 if (valid) {
                                     setModalThreeVisible(true)
-                                    handleAddEntry();
+                                    await handleAddEntry();
+                                    await checkGoalsList();
                                 }
                             }}>
                             <Text style = {styles.h3Text}>Finish Transaction</Text>

@@ -8,7 +8,8 @@ type LimitInfo = {
     limitAmount: string;
     limitSection: string;
     limitSubsection: string;
-    limitTimePeriod: string;
+    limitTimeAmount: number;
+    limitTimePeriodPlural: string;
 };
 
 type CutDownInfo = {
