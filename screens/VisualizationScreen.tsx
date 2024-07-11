@@ -30,45 +30,45 @@ const VisualizationScreen: React.FC = () => {
   const getSubName = (name: string) => {
     switch (name) {
       case "Sections":
-        setSubsectionNum(0);
-        break;
+        return 0;
       case "Food/Beverages Subsections":
-        setSubsectionNum(1);
+        return 1;
         break;
       case "Self Care/Health Subsections":
-        setSubsectionNum(2);
+        return 2;
         break;
       case "Clothes Subsections":
-        setSubsectionNum(3);
+        return 3;
         break;
       case "Fun Subsections":
-        setSubsectionNum(4);
+        return 4;
         break;
       case "Gifts Subsections":
-        setSubsectionNum(5);
+        return 5;
         break;
       case "Technology Subsections":
-        setSubsectionNum(6);
+        return 6;
         break;
       case "Housing Subsections":
-        setSubsectionNum(7);
+        return 7;
         break;
       case "Transportation Subsections":
-        setSubsectionNum(8);
+        return 8;
         break;
       case "Utilities Subsections":
-        setSubsectionNum(9);
+        return 9;
         break;
       case "Insurance Subsections":
-        setSubsectionNum(10);
+        return 10;
         break;
       case "Debt Subsections":
-        setSubsectionNum(11);
+        return 11;
         break;
       case "Miscellaneous Subsections":
-        setSubsectionNum(12);
+        return 12;
         break;
     }
+    return 0;
   };
 
   //   useEffect(() => {
@@ -103,30 +103,36 @@ const VisualizationScreen: React.FC = () => {
         }, (1000));
     }, []);*/
 
+  const updateVisualization = async () => {
+    try {
+      console.log("Updating visualization data again...");
+
+      setSectionSelected(false);
+      if (visualizationTopic === "Sections") {
+        console.log("Setting section...");
+        setSectionSelected(true);
+      }
+
+      const sectionNum = getSubName(visualizationTopic);
+
+      const results = await displayVisualization(
+        timePeriod,
+        visualizationTopic === "Sections",
+        sectionNum
+      );
+      console.log("Results:", results);
+      updateVisualizationList(results);
+    } catch (error) {
+      console.error("Failed to update visualization data:", error);
+    }
+  };
+
+  useEffect(() => {
+    updateVisualization();
+  }, [visualizationTopic, timePeriod]);
+
   useFocusEffect(
     useCallback(() => {
-      const updateVisualization = async () => {
-        try {
-          console.log("Updating visualization data again...");
-
-          setSectionSelected(false);
-
-          if (visualizationTopic === "Sections") {
-            console.log("Setting section...");
-            setSectionSelected(true);
-          }
-
-          const results = await displayVisualization(
-            timePeriod,
-            sectionSelected,
-            subsectionNum
-          );
-          updateVisualizationList(results);
-        } catch (error) {
-          console.error("Failed to update visualization data:", error);
-        }
-      };
-
       updateVisualization();
     }, [timePeriod, visualizationTopic])
   );
@@ -210,7 +216,6 @@ const VisualizationScreen: React.FC = () => {
                       ]}
                       onPress={() => {
                         setVisualizationTopic(topic);
-                        getSubName(topic);
                         setModalTwoVisible(false);
                       }}
                     >
