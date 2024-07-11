@@ -22,4 +22,8 @@ type CutDownInfo = {
     cutDownBaseAmount: string;
 };
 
-export { TransactionInfo, LimitInfo, CutDownInfo };
+type RemovedGoalInfo = {
+    removedGoalEntry: string;
+};
+
+export { TransactionInfo, LimitInfo, CutDownInfo, RemovedGoalInfo };

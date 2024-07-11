@@ -1,12 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
-import { measurements, visualizationOptions } from '../components/lists';
+import { measurements, test, visualizationOptions } from '../components/lists';
+import { displayVisualization } from '../components/db';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSpendingGoals } from '../Context';
 
 const VisualizationScreen: React.FC = () => {
     const [modalOneVisible, setModalOneVisible] = useState<boolean>(false);
     const [modalTwoVisible, setModalTwoVisible] = useState<boolean>(false);
     const [timePeriod, setTimePeriod] = useState<string>("Day");
     const [visualizationTopic, setVisualizationTopic] = useState<string>("Sections");
+    const [subsectionNum, setSubsectionNum] = useState<number>(0);
+    const { sectionSelected, setSectionSelected, visualizationList, updateVisualizationList } = useSpendingGoals();
+
+    useEffect(() => {
+        console.log('Changing topic...');
+
+        switch (visualizationTopic) {
+            case 'Sections':
+                setSubsectionNum(0);
+                break;
+            case 'Food/Beverages Subsections':
+                setSubsectionNum(1);
+                break;
+            case 'Self Care/Health Subsections':
+                setSubsectionNum(2);
+                break;
+            case 'Clothes Subsections':
+                setSubsectionNum(3);
+                break;
+            case 'Fun Subsections':
+                setSubsectionNum(4);
+                break;
+            case 'Gifts Subsections':
+                setSubsectionNum(5);
+                break;
+            case 'Technology Subsections':
+                setSubsectionNum(6);
+                break;
+            case 'Housing Subsections':
+                setSubsectionNum(7);
+                break;
+            case 'Transportation Subsections':
+                setSubsectionNum(8);
+                break;
+            case 'Utilities Subsections':
+                setSubsectionNum(9);
+                break;
+            case 'Insurance Subsections':
+                setSubsectionNum(10);
+                break;
+            case 'Debt Subsections':
+                setSubsectionNum(11);
+                break;
+            case 'Miscellaneous Subsections':
+                setSubsectionNum(12);
+                break;
+        };
+        
+        console.log(visualizationTopic);
+        console.log(subsectionNum);
+    }, [visualizationTopic]);
+
+    /*useEffect(() => {
+        const updateVisualization = async () => {
+            try {    
+                console.log('Updating visualization data...');
+
+                setSectionSelected(false);
+
+                if (visualizationTopic === 'Sections') {
+                    console.log('Setting section...');
+                    setSectionSelected(true);
+                }
+
+                const results = await displayVisualization(timePeriod, sectionSelected, subsectionNum);
+                updateVisualizationList(results);
+            } 
+            catch (error) {
+                console.error('Failed to update visualization data:', error);
+            }
+        };
+
+        setTimeout(() => {
+            updateVisualization();
+        }, (1000));
+    }, []);*/
+
+    useFocusEffect(
+        useCallback(() => {
+            const updateVisualization = async () => {
+                try {    
+                    console.log('Updating visualization data again...');
+
+                    setSectionSelected(false);
+
+                    if (visualizationTopic === 'Sections') {
+                        console.log('Setting section...');
+                        setSectionSelected(true);
+                    }
+
+                    const results = await displayVisualization(timePeriod, sectionSelected, subsectionNum);
+                    updateVisualizationList(results);
+                } 
+                catch (error) {
+                    console.error('Failed to update visualization data:', error);
+                }
+            };
+
+            updateVisualization();
+        }, [timePeriod, visualizationTopic])
+    );
         
     return (
         <SafeAreaView style = {styles.overallContainer}>
@@ -102,10 +206,17 @@ const VisualizationScreen: React.FC = () => {
                         </View>
                     </Modal>
                 </View>
-                <View style = {styles.graphContainer}>
-                    <View style = {styles.graphViewStyle}>
-
-                    </View>
+                <View style = {styles.contributorsContainer}>
+                    <ScrollView style = {styles.scrollViewStyle}>
+                        {visualizationList.map((visual: string, index: number) => (
+                            <View key = {index} style = {[
+                                styles.optionsButton,
+                                index < visualizationList.length && styles.optionBorder
+                            ]}>
+                                <Text style = {styles.optionsButton}>{visual}</Text>
+                            </View>
+                        ))}
+                    </ScrollView>
                 </View>
             </View>
         </SafeAreaView>
@@ -208,22 +319,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)', 
     },
-    graphContainer: {
-        flex: 1,
+    contributorsContainer: {
+        flex: 0.96,
         width: '90%',
-        marginTop: 5,
-        marginBottom: 15,
+        marginTop: 10,
         borderRadius: 10,
         borderWidth: 15,  
         borderColor: 'green',
         padding: 14,
-    },
-    graphViewStyle: {
-        width: '100%',
-        height: '100%',
-        borderColor: 'black',
-        borderWidth: 2, 
-        borderRadius: 10,
     },
 });
 

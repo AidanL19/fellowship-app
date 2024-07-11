@@ -8,30 +8,43 @@ import { useFocusEffect } from '@react-navigation/native';
 const HomeScreen: React.FC = () => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [timePeriod, setTimePeriod] = useState<string>("Day");
+    //const [dbReady, setDbReady] = useState<boolean>(false);
+    //const [ran, setRan] = useState<boolean>(false);
     const { spendingList, totalAmount, updateSpending } = useSpendingGoals();
 
-    const fetchSpending = async () => {
-        try {    
-            const dbReady = await databaseReady();
-            if (dbReady) {
-                const results = await displaySpending(timePeriod);
-                updateSpending(results);
-            } 
-        } 
-        catch (error) {
-            console.error('Failed to fetch spending data:', error);
-        }
-    };
-    
     useEffect(() => {
-        console.log('Fetching spending...');
+        const fetchSpending = async () => {
+            try {    
+                if (databaseReady()) {
+                    console.log('Fetching spending...');
+                    const results = await displaySpending(timePeriod);
+                    updateSpending(results);
+                }
+            } 
+            catch (error) {
+                console.error('Failed to fetch spending data:', error);
+            }
+        };
 
-        fetchSpending();
-      }, [timePeriod]);
+        setTimeout(() => {
+            fetchSpending();
+        }, (1000));
+    }, []);
 
     useFocusEffect(
         useCallback(() => {
-            console.log('Refreshing spending...');
+            const fetchSpending = async () => {
+                try {    
+                    if (databaseReady()) {
+                        console.log('Fetching spending again...');
+                        const results = await displaySpending(timePeriod);
+                        updateSpending(results); 
+                    }
+                } 
+                catch (error) {
+                    console.error('Failed to fetch spending data:', error);
+                }
+            };
 
             fetchSpending();
         }, [timePeriod])

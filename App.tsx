@@ -7,7 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import VisualizationScreen from './screens/VisualizationScreen';
-import { initializeDatabase, databaseReady, clearDatabase } from './components/db';
+import { initializeDatabase, databaseReady, clearDatabase, checkCutDownAmounts } from './components/db';
 
 const Tab = createBottomTabNavigator();
 
@@ -15,7 +15,8 @@ export default function App() {
   useEffect(() => {
     const setupDatabase = async () => {
       await initializeDatabase();
-      await databaseReady();
+      databaseReady();
+      await checkCutDownAmounts();
       //await clearDatabase();
     };
   

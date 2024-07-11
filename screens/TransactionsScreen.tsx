@@ -18,7 +18,7 @@ const TransactionsScreen: React.FC = () => {
     const [amount, setAmount] = useState<string>('');
     const [isFocused, setIsFocused] = useState(false);
     const [transactionList, setTransactionList] = useState<TransactionInfo[]>([]);
-    const { setTransactionSubmission, goalsList, transactionSubmission } = useSpendingGoals();
+    const { setTransactionSubmission, goalsList, setLimitsToRemove, setCutDownsToRemove, } = useSpendingGoals();
 
     useEffect(() => {
         let initialSubsection: string = "Groceries";
@@ -125,16 +125,24 @@ const TransactionsScreen: React.FC = () => {
         const transactionSubmission = await checkTransaction(newEntry);
         setTransactionSubmission(transactionSubmission);
 
+        checkGoalsList(transactionSubmission);
+
         return await addTransaction(newEntry);
     };
 
-    let found: boolean = false;
+    const checkGoalsList = async (transactionSubmission: any) => {
+        let found: boolean = false;
 
-    const checkGoalsList = async () => {
         for (let i: number = 0; i < goalsList.length; i++) {
             const result = await checkGoals(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, goalsList[i]);
             if (result) {
-                changeCounter(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, transactionSubmission.transactionAmount);
+                //await changeCounter(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, transactionSubmission.transactionAmount);
+                const indicesToRemove = await changeCounter(transactionSubmission.transactionSection, transactionSubmission.transactionSubsection, transactionSubmission.transactionAmount);
+                const limitIndices = indicesToRemove?.limitIndices ?? [];
+                const cutDownIndices = indicesToRemove?.cutDownIndices ?? [];
+                
+                setLimitsToRemove(limitIndices);
+                setCutDownsToRemove(cutDownIndices);
                 found = true;
             }
             if (found) {
@@ -262,7 +270,7 @@ const TransactionsScreen: React.FC = () => {
                                 if (valid) {
                                     setModalThreeVisible(true)
                                     await handleAddEntry();
-                                    await checkGoalsList();
+                                    //await checkGoalsList();
                                 }
                             }}>
                             <Text style = {styles.h3Text}>Finish Transaction</Text>

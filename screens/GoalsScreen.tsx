@@ -5,11 +5,11 @@ import { measurements, measurementsForDays, measurementsForWeeks, measurementsFo
     days, weeks, months, years, sections, foodBeverages, 
     selfCareHealth, clothes, fun, gifts, technology, housing, 
     transportation, utilities, insurance, debt, miscellaneous } from '../components/lists';
-import { displayLimitGoals, displayCutDownGoals, databaseReady } from '../components/db';
+import { displayLimitGoals, displayCutDownGoals, databaseReady, displayRemovedGoals } from '../components/db';
 import { useSpendingGoals } from '../Context';
 import { useFocusEffect } from '@react-navigation/native';
-import { addLimitPlan, addCutDownPlan, checkGoals, changeCounter } from '../components/db';
-import { LimitInfo, CutDownInfo } from '../models/DatabaseEntryInfo';
+import { addLimitPlan, addCutDownPlan, addRemovedGoal } from '../components/db';
+import { LimitInfo, CutDownInfo, RemovedGoalInfo } from '../models/DatabaseEntryInfo';
 
 const GoalsScreen: React.FC = () => {
     const [modalOneVisible, setModalOneVisible] = useState<boolean>(false);
@@ -32,123 +32,228 @@ const GoalsScreen: React.FC = () => {
     const [amountOne, setAmountOne] = useState<string>('');
     const [amountTwo, setAmountTwo] = useState<string>('');
     const [goal, setGoal] = useState<string | number>('');
-    const [isFocused, setIsFocused] = useState(false);
+    const [isFocused, setIsFocused] = useState<boolean>(false);
     const [limitList, setLimitList] = useState<LimitInfo[]>([]);
     const [cutDownList, setCutDownList] = useState<CutDownInfo[]>([]);
-    const { limitGoalsList, updateLimitGoals, cutDownGoalsList, updateCutDownGoals, setGoalsList, goalsList } = useSpendingGoals();
-    
+    //const [removedGoals, setRemovedGoals] = useState<string[]>([]);
+    const { limitGoalsList, updateLimitGoals, cutDownGoalsList, updateCutDownGoals, setGoalsList, goalsList, 
+    limitsToRemove, cutDownsToRemove, setLimitGoalsList, setCutDownGoalsList, updateGoalsToRemove, goalsToRemove } = useSpendingGoals();
+
+    const updateRemovedGoals = async () => {
+        try {
+          console.log('Updating removed goals...');
+          const results = await displayRemovedGoals();
+          updateGoalsToRemove(results);
+        } 
+        catch (error) {
+          console.error('Failed to update removed goals data:', error);
+        }
+    };
+
     useEffect(() => {
-        let initialSubsection: string = "Groceries";
-        let newSubsections: string[] = foodBeverages;
-        let initialTimeAmount: number = 1;
-        let newTimeAmounts: number[] = days;
-        let initialTimePeriod: string = "Day";
-        let newTimePeriods: string[] = measurements;
+        const performUpdate = async () => {
+            let initialSubsection: string = "Groceries";
+            let newSubsections: string[] = foodBeverages;
+            let initialTimeAmount: number = 1;
+            let newTimeAmounts: number[] = days;
+            let initialTimePeriod: string = "Day";
+            let newTimePeriods: string[] = measurements;
 
-        switch (section) {
-            case "Food/Beverages":
-                initialSubsection = "Groceries";
-                newSubsections = foodBeverages;
-                break;
-            case "Self Care/Health":
-                initialSubsection = "Skin/Hair";
-                newSubsections = selfCareHealth;
-                break;
-            case "Clothes":
-                initialSubsection = "Overwear";
-                newSubsections = clothes;
-                break;
-            case "Fun":
-                initialSubsection = "Entertainment/Media";
-                newSubsections = fun;
-                break;
-            case "Gifts":
-                initialSubsection = "Personal Gifts";
-                newSubsections = gifts;
-                break;
-            case "Technology":
-                initialSubsection = "Hardware/Devices";
-                newSubsections = technology;
-                break;
-            case "Housing":
-                initialSubsection = "Mortgage/Rent";
-                newSubsections = housing;
-                break;
-            case "Transportation":
-                initialSubsection = "Fuel/Charging";
-                newSubsections = transportation;
-                break;
-            case "Utilities":
-                initialSubsection = "Electricity";
-                newSubsections = utilities;
-                break;
-            case "Insurance":
-                initialSubsection = "Personal Insurance";
-                newSubsections = insurance;
-                break;
-            case "Debt":
-                initialSubsection = "Secured Debt";
-                newSubsections = debt;
-                break;
-            case "Miscellaneous":
-                initialSubsection = "Other Expenses";
-                newSubsections = miscellaneous;
-                break;
-        };
+            switch (section) {
+                case "Food/Beverages":
+                    initialSubsection = "Groceries";
+                    newSubsections = foodBeverages;
+                    break;
+                case "Self Care/Health":
+                    initialSubsection = "Skin/Hair";
+                    newSubsections = selfCareHealth;
+                    break;
+                case "Clothes":
+                    initialSubsection = "Overwear";
+                    newSubsections = clothes;
+                    break;
+                case "Fun":
+                    initialSubsection = "Entertainment/Media";
+                    newSubsections = fun;
+                    break;
+                case "Gifts":
+                    initialSubsection = "Personal Gifts";
+                    newSubsections = gifts;
+                    break;
+                case "Technology":
+                    initialSubsection = "Hardware/Devices";
+                    newSubsections = technology;
+                    break;
+                case "Housing":
+                    initialSubsection = "Mortgage/Rent";
+                    newSubsections = housing;
+                    break;
+                case "Transportation":
+                    initialSubsection = "Fuel/Charging";
+                    newSubsections = transportation;
+                    break;
+                case "Utilities":
+                    initialSubsection = "Electricity";
+                    newSubsections = utilities;
+                    break;
+                case "Insurance":
+                    initialSubsection = "Personal Insurance";
+                    newSubsections = insurance;
+                    break;
+                case "Debt":
+                    initialSubsection = "Secured Debt";
+                    newSubsections = debt;
+                    break;
+                case "Miscellaneous":
+                    initialSubsection = "Other Expenses";
+                    newSubsections = miscellaneous;
+                    break;
+            };
 
-        switch (timePeriodPlural) {
-            case "Days":
-                initialTimeAmount = 1;
-                newTimeAmounts = days;
-                initialTimePeriod = "Day";
-                newTimePeriods = measurementsForDays;
-                break;
-            case "Weeks":
-                initialTimeAmount = 1;
-                newTimeAmounts = weeks;
-                initialTimePeriod = "Day";
-                newTimePeriods = measurementsForWeeks;
-                break;
-            case "Months":
-                initialTimeAmount = 1;
-                newTimeAmounts = months;
-                initialTimePeriod = "Day";
-                newTimePeriods = measurementsForMonths;
-                break;
-            case "Years":
-                initialTimeAmount = 1;
-                newTimeAmounts = years;
-                initialTimePeriod = "Day";
-                break;
-        };
+            switch (timePeriodPlural) {
+                case "Days":
+                    initialTimeAmount = 1;
+                    newTimeAmounts = days;
+                    initialTimePeriod = "Day";
+                    newTimePeriods = measurementsForDays;
+                    break;
+                case "Weeks":
+                    initialTimeAmount = 1;
+                    newTimeAmounts = weeks;
+                    initialTimePeriod = "Day";
+                    newTimePeriods = measurementsForWeeks;
+                    break;
+                case "Months":
+                    initialTimeAmount = 1;
+                    newTimeAmounts = months;
+                    initialTimePeriod = "Day";
+                    newTimePeriods = measurementsForMonths;
+                    break;
+                case "Years":
+                    initialTimeAmount = 1;
+                    newTimeAmounts = years;
+                    initialTimePeriod = "Day";
+                    break;
+            };
 
-        setSubsection(initialSubsection);
-        setSubsections(newSubsections);
-        setTimeAmount(initialTimeAmount);
-        setTimeAmounts(newTimeAmounts);
-        setTimePeriod(initialTimePeriod);
-        setTimePeriods(newTimePeriods);
+            setSubsection(initialSubsection);
+            setSubsections(newSubsections);
+            setTimeAmount(initialTimeAmount);
+            setTimeAmounts(newTimeAmounts);
+            setTimePeriod(initialTimePeriod);
+            setTimePeriods(newTimePeriods);
 
-        setGoalsList(limitGoalsList.concat(cutDownGoalsList));
+            let goalsListCopy: string[] = limitGoalsList.concat(cutDownGoalsList);
+            await updateRemovedGoals();
 
-        console.log(limitList);
-        console.log(cutDownList);
+            console.log("Goals copy:", goalsListCopy);
+            //console.log("Goals list:", goalsList);
+            console.log("Removed goals:", goalsToRemove);
+        
+            for (let i = 0; i < goalsToRemove.length; i++) {
+                for (let j = 0; j < goalsListCopy.length; j++) {
+                    if (goalsListCopy[j] === goalsToRemove[i]) {
+                        console.log('Removing goal...');
+                        goalsListCopy.splice(j, 1);
+                        j--;
+                    }
+                }
+            }
 
+            setGoalsList(goalsListCopy);
+            console.log(goalsListCopy);
+
+            console.log(limitList);
+            console.log(cutDownList);
+        }
+
+        performUpdate();
     }, [section, timePeriodPlural, limitList, cutDownList, limitGoalsList, cutDownGoalsList]); 
 
-    const fetchGoals = async () => {
-        try {
-            const dbReady = await databaseReady();
-            if (dbReady) {
+    useEffect(() => {
+        const performUpdate = async () => {
+            let cutDownGoalsListCopy = [...cutDownGoalsList];
+            let limitGoalsListCopy = [...limitGoalsList];
+            let removedGoalsCopy = [];
+    
+            console.log(limitsToRemove, cutDownsToRemove);
+    
+            for (let i = 0; i < cutDownsToRemove.length; i++) {
+                removedGoalsCopy.push(cutDownGoalsListCopy[cutDownsToRemove[i]]);
+                cutDownGoalsListCopy.splice(cutDownsToRemove[i], 1);
+            }
+    
+            for (let i = 0; i < limitsToRemove.length; i++) {
+                removedGoalsCopy.push(limitGoalsListCopy[limitsToRemove[i]]);
+                limitGoalsListCopy.splice(limitsToRemove[i], 1);
+            }
+    
+            console.log('Setting cut downs...');
+            setCutDownGoalsList(cutDownGoalsListCopy);
+            console.log('Setting limits...');
+            setLimitGoalsList(limitGoalsListCopy);
+            console.log('Removed goals copy:', removedGoalsCopy);
+    
+            for (let i = 0; i < removedGoalsCopy.length; i++) {
+                handleRemovedGoalEntry(removedGoalsCopy[i]);
+            }
+        
+            let goalsListCopy = [...limitGoalsListCopy, ...cutDownGoalsListCopy];
+            await updateRemovedGoals();
+
+            console.log("Goals copy:", goalsListCopy);
+            console.log("Removed goals:", goalsToRemove);
+        
+            for (let i = 0; i < goalsToRemove.length; i++) {
+                for (let j = 0; j < goalsListCopy.length; j++) {
+                    if (goalsListCopy[j] === goalsToRemove[i]) {
+                        console.log('Removing goal...');
+                        goalsListCopy.splice(j, 1);
+                        j--;
+                    }
+                }
+            }
+        
+            setGoalsList(goalsListCopy);
+        };
+        
+        performUpdate();
+    }, [limitsToRemove, cutDownsToRemove]);
+
+
+    useEffect(() => {
+        const updateGoals = async () => {
+            try {    
+                console.log('Updating goals...');
+
                 const results1 = await displayLimitGoals();
                 updateLimitGoals(results1);
 
                 const results2 = await displayCutDownGoals();
                 updateCutDownGoals(results2);
+            } 
+            catch (error) {
+                console.error('Failed to update goals data:', error);
             }
+        };
+
+        setTimeout(() => {
+            updateGoals();
+        }, (1000));
+    }, []);
+
+    const fetchGoals = async () => {
+        try {
+            console.log('Fetching goals...');
+
+            const results1 = await displayLimitGoals();
+            updateLimitGoals(results1);
+
+            const results2 = await displayCutDownGoals();
+            updateCutDownGoals(results2);
         } 
         catch (error) {
-            console.error('Failed to fetch spending data:', error);
+            console.error('Failed to fetch goals data:', error);
         }
     };
 
@@ -241,6 +346,14 @@ const GoalsScreen: React.FC = () => {
 
         return await addCutDownPlan(newEntry);
     };
+
+    const handleRemovedGoalEntry = async (removedGoal: string) => {
+        const newEntry: RemovedGoalInfo = { removedGoalEntry: removedGoal };
+        
+        console.log(newEntry);
+
+        await addRemovedGoal(newEntry);
+    }
 
     const toggleLimitPlan = () => {
         setDisplayLimitPlan(prevState => !prevState);
