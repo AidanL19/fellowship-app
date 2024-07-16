@@ -3,7 +3,6 @@ import { sections, foodBeverages, selfCareHealth, clothes, fun, gifts,
     technology, housing, transportation, utilities, insurance, debt, 
     miscellaneous, } from '../components/lists';
 import moment from 'moment';
-import { useSpendingGoals } from '../Context';
 import type { TransactionInfo, LimitInfo, CutDownInfo, RemovedGoalInfo } from '../models/DatabaseEntryInfo';
 
 let db: any;
@@ -245,6 +244,49 @@ const checkCutDownAmounts = async () => {
     }
     catch (error) {
         console.error('Failed to check cut down amounts:', error);
+    }
+};
+
+const goalDateReached = async () => {
+    console.log('Check if goal date reached...');
+
+    try {
+        const currentDate = getLocalTime();
+
+        const limitPlanResults = await db.getAllAsync('SELECT * FROM LimitPlan');
+        const cutDownPlanResults = await db.getAllAsync('SELECT * FROM CutDownPlan');
+
+        let moreGoalsToRemoveCopy: string[] = [];
+
+        for (let i: number = 0; i < limitPlanResults.length; i++) {
+            const current = limitPlanResults[i];
+
+            const endDate = current.end_date
+
+            if (currentDate === endDate) {
+                moreGoalsToRemoveCopy.push('Spend less than $', current.amount, ' on ', current.section_name, ' - ', 
+                current.subsection_name, ' for ', current.time_amount, ' ', current.time_period_plural, '. Ends on ', current.end_date);
+            }
+        }
+
+        for (let i: number = 0; i < cutDownPlanResults.length; i++) {
+            const current = cutDownPlanResults[i];
+
+            const endDate = current.end_date
+
+            if (currentDate === endDate) {
+                moreGoalsToRemoveCopy.push('Spend $', current.amount, ' less on ', current.section_name, ' - ', 
+                current.subsection_name, ' each ', current.time_period, ' for ', current.time_amount, ' ', 
+                current.time_period_plural, ' with base $', current.base_amount, '. Ends on ', current.end_date);
+            }
+        }
+
+        return moreGoalsToRemoveCopy;
+
+        console.log('Checked if goal date reached successfully');
+    }
+    catch (error) {
+        console.error('Failed to check if goal date reached:', error);
     }
 };
 
@@ -609,4 +651,5 @@ const displayRemovedGoals = async () => {
 
 export { initializeDatabase, clearDatabase, addTransaction, addLimitPlan, addCutDownPlan, displaySpending, 
     getTimePeriod, databaseReady, displayLimitGoals, displayCutDownGoals, checkTransaction, checkGoals,
-    changeCounter, getDaysUntilEnd, checkCutDownAmounts, addRemovedGoal, displayRemovedGoals, displayVisualization };
+    changeCounter, getDaysUntilEnd, checkCutDownAmounts, addRemovedGoal, displayRemovedGoals, displayVisualization,
+    goalDateReached };

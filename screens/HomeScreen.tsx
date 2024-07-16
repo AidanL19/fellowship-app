@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { measurements, test } from '../components/lists';
-import { displaySpending, databaseReady } from '../components/db';
+import { displaySpending, databaseReady, goalDateReached } from '../components/db';
 import { useSpendingGoals } from '../Context';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -10,7 +10,7 @@ const HomeScreen: React.FC = () => {
     const [timePeriod, setTimePeriod] = useState<string>("Day");
     //const [dbReady, setDbReady] = useState<boolean>(false);
     //const [ran, setRan] = useState<boolean>(false);
-    const { spendingList, totalAmount, updateSpending } = useSpendingGoals();
+    const { spendingList, totalAmount, updateSpending, setMoreGoalsToRemove } = useSpendingGoals();
 
     useEffect(() => {
         const fetchSpending = async () => {
@@ -20,6 +20,9 @@ const HomeScreen: React.FC = () => {
                     const results = await displaySpending(timePeriod);
                     updateSpending(results);
                 }
+
+                const result = await goalDateReached();
+                setMoreGoalsToRemove((prevGoals: string[]) => [...prevGoals, ...(result ?? [])]);
             } 
             catch (error) {
                 console.error('Failed to fetch spending data:', error);
@@ -100,7 +103,9 @@ const HomeScreen: React.FC = () => {
                             </View>
                         </Modal>
                     </View>
-                    <Text style = {styles.amountText}>${totalAmount}</Text>
+                    <Text style={styles.amountText}>
+                        {totalAmount > 999999999 ? '>$999999999' : `$${totalAmount}`}
+                    </Text>
                     <Text style = {styles.h2Text}>Top Contributors For This {timePeriod}:</Text>
                     <View style = {styles.contributorsContainer}>
                         <ScrollView style = {styles.scrollViewStyle}>

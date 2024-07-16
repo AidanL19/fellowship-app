@@ -2,16 +2,17 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Entypo } from '@expo/vector-icons';
-import { SpendingGoalsProvider } from './Context';
+import { SpendingGoalsProvider, useSpendingGoals } from './Context';
 import HomeScreen from './screens/HomeScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
 import GoalsScreen from './screens/GoalsScreen';
 import VisualizationScreen from './screens/VisualizationScreen';
-import { initializeDatabase, databaseReady, clearDatabase, checkCutDownAmounts } from './components/db';
+import { initializeDatabase, databaseReady, clearDatabase, checkCutDownAmounts, goalDateReached } from './components/db';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+
   useEffect(() => {
     const setupDatabase = async () => {
       await initializeDatabase();

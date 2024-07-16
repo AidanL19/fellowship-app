@@ -71,38 +71,6 @@ const VisualizationScreen: React.FC = () => {
     return 0;
   };
 
-  //   useEffect(() => {
-  //     console.log("Changing topic...", visualizationTopic);
-
-  //     console.log(visualizationTopic);
-  //     console.log(subsectionNum);
-  //   }, [visualizationTopic]);
-
-  /*useEffect(() => {
-        const updateVisualization = async () => {
-            try {    
-                console.log('Updating visualization data...');
-
-                setSectionSelected(false);
-
-                if (visualizationTopic === 'Sections') {
-                    console.log('Setting section...');
-                    setSectionSelected(true);
-                }
-
-                const results = await displayVisualization(timePeriod, sectionSelected, subsectionNum);
-                updateVisualizationList(results);
-            } 
-            catch (error) {
-                console.error('Failed to update visualization data:', error);
-            }
-        };
-
-        setTimeout(() => {
-            updateVisualization();
-        }, (1000));
-    }, []);*/
-
   const updateVisualization = async () => {
     try {
       console.log("Updating visualization data again...");
@@ -129,11 +97,13 @@ const VisualizationScreen: React.FC = () => {
 
   useEffect(() => {
     updateVisualization();
+    console.log("Visualization list:", visualizationList);
   }, [visualizationTopic, timePeriod]);
 
   useFocusEffect(
     useCallback(() => {
       updateVisualization();
+      console.log("Visualization list:", visualizationList);
     }, [timePeriod, visualizationTopic])
   );
 

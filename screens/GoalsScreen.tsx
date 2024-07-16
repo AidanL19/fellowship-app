@@ -37,7 +37,8 @@ const GoalsScreen: React.FC = () => {
     const [cutDownList, setCutDownList] = useState<CutDownInfo[]>([]);
     //const [removedGoals, setRemovedGoals] = useState<string[]>([]);
     const { limitGoalsList, updateLimitGoals, cutDownGoalsList, updateCutDownGoals, setGoalsList, goalsList, 
-    limitsToRemove, cutDownsToRemove, setLimitGoalsList, setCutDownGoalsList, updateGoalsToRemove, goalsToRemove } = useSpendingGoals();
+    limitsToRemove, cutDownsToRemove, setLimitGoalsList, setCutDownGoalsList, updateGoalsToRemove, goalsToRemove,
+    moreGoalsToRemove } = useSpendingGoals();
 
     const updateRemovedGoals = async () => {
         try {
@@ -152,7 +153,7 @@ const GoalsScreen: React.FC = () => {
         
             for (let i = 0; i < goalsToRemove.length; i++) {
                 for (let j = 0; j < goalsListCopy.length; j++) {
-                    if (goalsListCopy[j] === goalsToRemove[i]) {
+                    if ((goalsListCopy[j] === goalsToRemove[i]) || moreGoalsToRemove.includes(goalsListCopy[j])) {
                         console.log('Removing goal...');
                         goalsListCopy.splice(j, 1);
                         j--;
@@ -188,10 +189,6 @@ const GoalsScreen: React.FC = () => {
                 limitGoalsListCopy.splice(limitsToRemove[i], 1);
             }
     
-            console.log('Setting cut downs...');
-            setCutDownGoalsList(cutDownGoalsListCopy);
-            console.log('Setting limits...');
-            setLimitGoalsList(limitGoalsListCopy);
             console.log('Removed goals copy:', removedGoalsCopy);
     
             for (let i = 0; i < removedGoalsCopy.length; i++) {
@@ -206,7 +203,7 @@ const GoalsScreen: React.FC = () => {
         
             for (let i = 0; i < goalsToRemove.length; i++) {
                 for (let j = 0; j < goalsListCopy.length; j++) {
-                    if (goalsListCopy[j] === goalsToRemove[i]) {
+                    if ((goalsListCopy[j] === goalsToRemove[i]) || moreGoalsToRemove.includes(goalsListCopy[j])) {
                         console.log('Removing goal...');
                         goalsListCopy.splice(j, 1);
                         j--;
@@ -215,6 +212,11 @@ const GoalsScreen: React.FC = () => {
             }
         
             setGoalsList(goalsListCopy);
+
+            console.log('Setting cut downs...');
+            setCutDownGoalsList(cutDownGoalsListCopy);
+            console.log('Setting limits...');
+            setLimitGoalsList(limitGoalsListCopy);
         };
         
         performUpdate();
@@ -294,7 +296,7 @@ const GoalsScreen: React.FC = () => {
 
         const number = parseFloat(amountOne);
 
-        if (isNaN(number)) {
+        if (isNaN(number) || number === 0) {
             Alert.alert("Invalid Input", "Please enter a valid number");
             valid = false;
             return;
@@ -312,7 +314,7 @@ const GoalsScreen: React.FC = () => {
 
         const number = parseFloat(amountTwo);
 
-        if (isNaN(number)) {
+        if (isNaN(number) || number === 0) {
             Alert.alert("Invalid Input", "Please enter a valid number");
             valid = false;
             return;

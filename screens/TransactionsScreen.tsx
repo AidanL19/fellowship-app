@@ -107,7 +107,7 @@ const TransactionsScreen: React.FC = () => {
 
         const number = parseFloat(amount);
 
-        if (isNaN(number)) {
+        if (isNaN(number) || number === 0) {
             Alert.alert("Invalid Input", "Please enter a valid number");
             valid = false;
             return;

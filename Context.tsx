@@ -14,6 +14,7 @@ export const SpendingGoalsProvider: React.FC<{ children: ReactNode }> = ({ child
   const [limitsToRemove, setLimitsToRemove] = useState<number[]>([]);
   const [cutDownsToRemove, setCutDownsToRemove] = useState<number[]>([]);
   const [goalsToRemove, setGoalsToRemove] = useState<string[]>([]);
+  const [moreGoalsToRemove, setMoreGoalsToRemove] = useState<string[]>([]);
   const [visualizationList, setVisualizationList] = useState<string[]>([]);
   const [sectionSelected, setSectionSelected] = useState<boolean>(false);
 
@@ -50,7 +51,7 @@ export const SpendingGoalsProvider: React.FC<{ children: ReactNode }> = ({ child
     updateCutDownGoals, transactionSubmission, setTransactionSubmission, goalsList, setGoalsList, limitsToRemove, 
     setLimitsToRemove, cutDownsToRemove, setCutDownsToRemove, setLimitGoalsList, setCutDownGoalsList, updateGoalsToRemove,
     goalsToRemove, setGoalsToRemove, visualizationList, setVisualizationList, sectionSelected, setSectionSelected,
-    updateVisualizationList }}>
+    updateVisualizationList, moreGoalsToRemove, setMoreGoalsToRemove }}>
       {children}
     </SpendingGoalsContext.Provider>
   );
