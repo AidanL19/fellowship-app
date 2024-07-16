@@ -33,40 +33,39 @@ const VisualizationScreen: React.FC = () => {
         return 0;
       case "Food/Beverages Subsections":
         return 1;
-        break;
+
       case "Self Care/Health Subsections":
         return 2;
-        break;
+
       case "Clothes Subsections":
         return 3;
-        break;
+
       case "Fun Subsections":
         return 4;
-        break;
+
       case "Gifts Subsections":
         return 5;
-        break;
+
       case "Technology Subsections":
         return 6;
-        break;
+
       case "Housing Subsections":
         return 7;
-        break;
+
       case "Transportation Subsections":
         return 8;
-        break;
+
       case "Utilities Subsections":
         return 9;
-        break;
+
       case "Insurance Subsections":
         return 10;
-        break;
+
       case "Debt Subsections":
         return 11;
-        break;
+
       case "Miscellaneous Subsections":
         return 12;
-        break;
     }
     return 0;
   };
@@ -89,13 +88,15 @@ const VisualizationScreen: React.FC = () => {
         sectionNum
       );
       console.log("Results:", results);
-      updateVisualizationList(results);
+      updateVisualizationList(results, visualizationTopic === "Sections");
     } catch (error) {
       console.error("Failed to update visualization data:", error);
     }
   };
 
   useEffect(() => {
+    console.log("Visualization list:", visualizationList);
+
     updateVisualization();
     console.log("Visualization list:", visualizationList);
   }, [visualizationTopic, timePeriod]);
