@@ -18,7 +18,7 @@ export default function App() {
       await initializeDatabase();
       databaseReady();
       await checkCutDownAmounts();
-      //await clearDatabase();
+      // await clearDatabase();
     };
   
     setupDatabase();

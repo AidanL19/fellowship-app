@@ -148,8 +148,8 @@ const GoalsScreen: React.FC = () => {
             await updateRemovedGoals();
 
             console.log("Goals copy:", goalsListCopy);
-            //console.log("Goals list:", goalsList);
             console.log("Removed goals:", goalsToRemove);
+            console.log("More removed goals:", moreGoalsToRemove);
         
             for (let i = 0; i < goalsToRemove.length; i++) {
                 for (let j = 0; j < goalsListCopy.length; j++) {
@@ -200,6 +200,7 @@ const GoalsScreen: React.FC = () => {
 
             console.log("Goals copy:", goalsListCopy);
             console.log("Removed goals:", goalsToRemove);
+            console.log("More removed goals:", moreGoalsToRemove);
         
             for (let i = 0; i < goalsToRemove.length; i++) {
                 for (let j = 0; j < goalsListCopy.length; j++) {

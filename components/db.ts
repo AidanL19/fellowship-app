@@ -230,14 +230,18 @@ const checkCutDownAmounts = async () => {
 
             for (let j: number = 0; j < dateList.length - 1; j++) {
                 if (moment(currentDate, 'YYYY-MM-DD').isBetween(moment(dateList[j], 'YYYY-MM-DD'), moment(dateList[j + 1], 'YYYY-MM-DD'), null, '[]')) {
-                    multiplier = j;
+                    multiplier = (j + 1); 
                     break; 
                 }
             }
 
+            console.log(current.amount, multiplier);
+
             const amountToSubtract = (current.amount * multiplier);
 
-            await db.runAsync('UPDATE CutDownPlan SET base_amount_to_change = base_amount - ? WHERE cut_down_plan_id = ?', [amountToSubtract, (i + 1)]);
+            await db.runAsync('UPDATE CutDownPlan SET base_amount_to_change = base_amount - ? WHERE cut_down_plan_id = ?', [amountToSubtract, current.cut_down_plan_id]);
+
+            console.log(current.base_amount_to_change);
         }
 
         console.log('Cut down amounts checked successfully');
@@ -264,8 +268,8 @@ const goalDateReached = async () => {
             const endDate = current.end_date
 
             if (currentDate === endDate) {
-                moreGoalsToRemoveCopy.push('Spend less than $', current.amount, ' on ', current.section_name, ' - ', 
-                current.subsection_name, ' for ', current.time_amount, ' ', current.time_period_plural, '. Ends on ', current.end_date);
+                moreGoalsToRemoveCopy.push('Spend less than $'.concat(current.amount, ' on ', current.section_name, ' - ', 
+                current.subsection_name, ' for ', current.time_amount, ' ', current.time_period_plural, '. Ends on ', current.end_date));
             }
         }
 
@@ -275,9 +279,9 @@ const goalDateReached = async () => {
             const endDate = current.end_date
 
             if (currentDate === endDate) {
-                moreGoalsToRemoveCopy.push('Spend $', current.amount, ' less on ', current.section_name, ' - ', 
+                moreGoalsToRemoveCopy.push('Spend $'.concat(current.amount, ' less on ', current.section_name, ' - ', 
                 current.subsection_name, ' each ', current.time_period, ' for ', current.time_amount, ' ', 
-                current.time_period_plural, ' with base $', current.base_amount, '. Ends on ', current.end_date);
+                current.time_period_plural, ' with base $', current.base_amount, '. Ends on ', current.end_date));
             }
         }
 
